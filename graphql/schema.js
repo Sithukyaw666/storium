@@ -5,12 +5,19 @@ const {
   GraphQLID,
   GraphQLSchema,
   GraphQLList,
+  GraphQLInt,
+  graphqlSync,
 } = require("graphql");
 
 const bcrypt = require("bcrypt");
-const { createUserValidation } = require("../validations/user.validation");
+const jwt = require("jsonwebtoken");
+const {
+  createUserValidation,
+  loginValidation,
+} = require("../validations/user.validation");
 const User = require("../models/user.model");
 const Story = require("../models/story.model");
+const verifyToken = require("../utils/authenticate");
 const userType = new GraphQLObjectType({
   name: "userType",
   fields: () => ({
@@ -25,12 +32,21 @@ const userType = new GraphQLObjectType({
     },
   }),
 });
+const authType = new GraphQLObjectType({
+  name: "authType",
+  fields: () => ({
+    user: { type: GraphQLID },
+  }),
+});
 const storyType = new GraphQLObjectType({
   name: "storyType",
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLID) },
+    title: { type: GraphQLString },
     content: { type: GraphQLString },
     authorID: { type: GraphQLID },
+    claps: { type: GraphQLInt },
+    createdAt: { type: GraphQLString },
     author: {
       type: userType,
       resolve: async (story) => {
@@ -49,6 +65,16 @@ const queryType = new GraphQLObjectType({
       },
       resolve: async (_, { id }) => {
         return await User.findById(id);
+      },
+    },
+    me: {
+      type: authType,
+      resolve: async (a, b, context) => {
+        const user = verifyToken(context);
+        if (user) {
+          const user_ = await User.findById(user);
+          return { user: user_._id };
+        } else return { user: null };
       },
     },
     getAllStory: {
@@ -92,15 +118,66 @@ const mutationType = new GraphQLObjectType({
         return await user.save();
       },
     },
+    loginUser: {
+      type: userType,
+      args: {
+        email: { type: GraphQLString },
+        password: { type: GraphQLString },
+      },
+      resolve: async (_, args, context) => {
+        const { error } = loginValidation(args);
+        if (error) throw new Error(error);
+        const user = await User.findOne({ email: args.email });
+        if (!user) throw new Error("user not found");
+        const match = await bcrypt.compare(args.password, user.password);
+        if (!match) throw new Error("incorrect password");
+        if (match) {
+          const token = jwt.sign({ user: user._id }, process.env.TOKEN_SECRET);
+          context.res.cookie("bearer", token, {
+            httpOnly: true,
+          });
+          return user;
+        }
+      },
+    },
     createStory: {
       type: storyType,
       args: {
+        title: { type: GraphQLString },
         content: { type: GraphQLString },
-        authorID: { type: GraphQLID },
       },
-      resolve: async (_, args) => {
-        const story = new Story(args);
-        return await story.save();
+      resolve: async (_, { title, content }, context) => {
+        const user = verifyToken(context);
+
+        if (user) {
+          const story = new Story({
+            title: title,
+            content: content,
+            authorID: user,
+          });
+          return await story.save();
+        }
+      },
+    },
+    logout: {
+      type: authType,
+      resolve: async (a, b, context) => {
+        context.res.clearCookie("bearer");
+        return { user: null };
+      },
+    },
+    clap: {
+      type: storyType,
+      args: { id: { type: GraphQLID } },
+      resolve: async (_, { id }) => {
+        const story = await Story.findById(id);
+        if (!story) throw new Error("Story not found");
+        try {
+          story.clap();
+          return story;
+        } catch {
+          throw new Error();
+        }
       },
     },
   }),

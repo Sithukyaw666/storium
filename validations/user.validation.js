@@ -1,4 +1,3 @@
-const { allow } = require("joi");
 const joi = require("joi");
 const createUserValidation = (object) => {
   const schema = joi.object({
