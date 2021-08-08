@@ -24,6 +24,8 @@ const userType = new GraphQLObjectType({
     id: { type: GraphQLNonNull(GraphQLID) },
     username: { type: GraphQLString },
     email: { type: GraphQLString },
+    followers: { type: GraphQLList(GraphQLID) },
+    followings: { type: GraphQLList(GraphQLID) },
     stories: {
       type: GraphQLList(storyType),
       resolve: async (author) => {
@@ -178,6 +180,19 @@ const mutationType = new GraphQLObjectType({
         } catch {
           throw new Error();
         }
+      },
+    },
+    followUser: {
+      type: userType,
+      args: { id: { type: GraphQLID } },
+      resolve: async (_, { id }, context) => {
+        const user_id = verifyToken(context);
+        const user = await User.findById(id);
+        const user_ = await User.findById(user_id);
+        if (!user) throw new Error("user not found");
+        await user.follow(user_id);
+        await user_.addFollowings(id);
+        return user;
       },
     },
   }),

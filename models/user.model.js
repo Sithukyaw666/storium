@@ -31,4 +31,21 @@ const userSchema = new Schema({
   ],
 });
 
+userSchema.methods.follow = function (id) {
+  if (this.followers.indexOf(id) === -1) {
+    this.followers.push(id);
+  } else {
+    this.followers = this.followers.filter((f) => !id);
+  }
+  return this.save();
+};
+userSchema.methods.addFollowings = function (id) {
+  if (this.followings.indexOf(id) === -1) {
+    this.followings.push(id);
+  } else {
+    this.followings = this.followings.filter((f) => !id);
+  }
+  return this.save();
+};
+
 module.exports = model("User", userSchema);
