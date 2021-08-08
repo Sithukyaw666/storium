@@ -10,4 +10,6 @@
 - Convert normal plain-text password to hash password
 - Create Authentication with JWT
 
+### all done
+
 #### Need something? take a ref to rest api one
