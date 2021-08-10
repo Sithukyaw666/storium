@@ -40,6 +40,13 @@ const authType = new GraphQLObjectType({
     user: { type: GraphQLID },
   }),
 });
+const validationType = new GraphQLObjectType({
+  name: "validationType",
+  fields: () => ({
+    error: { type: GraphQLString },
+    user: { type: GraphQLID },
+  }),
+});
 const storyType = new GraphQLObjectType({
   name: "storyType",
   fields: () => ({
@@ -100,7 +107,7 @@ const mutationType = new GraphQLObjectType({
   name: "mutation",
   fields: () => ({
     createUser: {
-      type: userType,
+      type: validationType,
       args: {
         username: { type: GraphQLNonNull(GraphQLString) },
         email: { type: GraphQLNonNull(GraphQLString) },
@@ -108,37 +115,38 @@ const mutationType = new GraphQLObjectType({
       },
       resolve: async (_, args) => {
         const { error } = createUserValidation(args);
-        if (error) throw new Error(error);
+        if (error) return { error: error.details[0].message };
         const emailExist = await User.findOne({ email: args.email });
-        if (emailExist) throw new Error("Email already exist");
+        if (emailExist) return { error: "Email is already in use" };
         const hashPassword = await bcrypt.hash(args.password.toString(), 10);
         const user = new User({
           username: args.username,
           email: args.email,
           password: hashPassword,
         });
-        return await user.save();
+        const newUser = await user.save();
+        return { user: newUser._id };
       },
     },
     loginUser: {
-      type: userType,
+      type: validationType,
       args: {
         email: { type: GraphQLString },
         password: { type: GraphQLString },
       },
       resolve: async (_, args, context) => {
         const { error } = loginValidation(args);
-        if (error) throw new Error(error);
+        if (error) return { error: error.details[0].message };
         const user = await User.findOne({ email: args.email });
-        if (!user) throw new Error("user not found");
+        if (!user) return { error: "User not found" };
         const match = await bcrypt.compare(args.password, user.password);
-        if (!match) throw new Error("incorrect password");
+        if (!match) return { error: "Incorrect Password" };
         if (match) {
           const token = jwt.sign({ user: user._id }, process.env.TOKEN_SECRET);
           context.res.cookie("bearer", token, {
             httpOnly: true,
           });
-          return user;
+          return { user: user._id };
         }
       },
     },
