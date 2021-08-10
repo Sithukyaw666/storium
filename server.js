@@ -7,7 +7,7 @@ const schema = require("./graphql/schema");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
-const URI = "mongodb://127.0.0.1:27017/storium";
+const URI = process.env.MONGODB_CONFIG;
 mongoose.connect(URI, { useNewUrlParser: true, useUnifiedTopology: true }, () =>
   console.log("Connected to DB!")
 );
