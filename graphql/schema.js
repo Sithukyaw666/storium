@@ -146,6 +146,7 @@ const mutationType = new GraphQLObjectType({
           context.res.cookie("bearer", token, {
             httpOnly: true,
             sameSite: "none",
+            secure: true,
           });
           return { user: user._id };
         }
