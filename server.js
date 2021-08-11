@@ -14,7 +14,7 @@ mongoose.connect(URI, { useNewUrlParser: true, useUnifiedTopology: true }, () =>
 
 const app = express();
 app.use(cookieParser());
-app.use(cors({ credentials: true }));
+app.use(cors({ origin: "*", credentials: true }));
 app.use(
   "/graphql",
   graphqlHTTP((req, res) => ({
