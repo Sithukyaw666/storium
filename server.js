@@ -11,25 +11,25 @@ const URI = process.env.MONGODB_CONFIG;
 mongoose.connect(URI, { useNewUrlParser: true, useUnifiedTopology: true }, () =>
   console.log("Connected to DB!")
 );
-var whitelist = [
-  "http:/localhost:3000",
-  "http://localhost:5000",
-  "https://storium-web.web.app",
-];
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-};
+// var whitelist = [
+//   "http:/localhost:3000",
+//   "http://localhost:5000",
+//   "https://storium-web.web.app",
+// ];
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (whitelist.indexOf(origin) !== -1 || !origin) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true,
+// };
 
 const app = express();
 app.use(cookieParser());
-app.use(cors(corsOptions));
+app.use(cors({ origin: "https://storium-web.web.app", credentials: true }));
 app.use(
   "/graphql",
   graphqlHTTP((req, res) => ({
