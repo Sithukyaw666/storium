@@ -145,6 +145,7 @@ const mutationType = new GraphQLObjectType({
           const token = jwt.sign({ user: user._id }, process.env.TOKEN_SECRET);
           context.res.cookie("bearer", token, {
             httpOnly: true,
+            sameSite: "none",
           });
           return { user: user._id };
         }
