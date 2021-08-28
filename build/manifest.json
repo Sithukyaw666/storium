@@ -1,6 +1,6 @@
 {
-  "short_name": "",
-  "name": "",
+  "short_name": "Storium",
+  "name": "Storium Web App",
 
   "icons": [
     {
@@ -41,7 +41,13 @@
     },
     {
       "src": "/maskable_icon.png",
-      "sizes": "192x192",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/maskable_icon_x512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
