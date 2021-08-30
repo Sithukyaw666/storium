@@ -54,7 +54,10 @@ const storyType = new GraphQLObjectType({
     title: { type: GraphQLString },
     content: { type: GraphQLString },
     authorID: { type: GraphQLID },
-    claps: { type: GraphQLInt },
+    reactions: { type: GraphQLList(GraphQLID) },
+    comments: {
+      type: GraphQLList(commentType),
+    },
     createdAt: { type: GraphQLString },
     author: {
       type: userType,
@@ -62,6 +65,14 @@ const storyType = new GraphQLObjectType({
         return await User.findById(story.authorID);
       },
     },
+  }),
+});
+const commentType = new GraphQLObjectType({
+  name: "commentType",
+  fields: () => ({
+    id: { type: GraphQLID },
+    author: { type: GraphQLID },
+    comment: { type: GraphQLString },
   }),
 });
 const queryType = new GraphQLObjectType({
@@ -176,18 +187,30 @@ const mutationType = new GraphQLObjectType({
         return { user: null };
       },
     },
-    clap: {
+    react: {
       type: storyType,
       args: { id: { type: GraphQLID } },
-      resolve: async (_, { id }) => {
+      resolve: async (_, { id }, context) => {
+        const user_id = verifyToken(context);
         const story = await Story.findById(id);
         if (!story) throw new Error("Story not found");
-        try {
-          story.clap();
-          return story;
-        } catch {
-          throw new Error();
-        }
+        await story.react(user_id);
+        return story;
+      },
+    },
+    comment: {
+      type: storyType,
+      args: {
+        id: { type: GraphQLID },
+        comment: { type: GraphQLString },
+      },
+      resolve: async (_, { id, comment }, context) => {
+        const author = verifyToken(context);
+        const story = await Story.findById(id);
+        if (!story) throw new Error("story not found");
+        const cmt = { comment, author };
+        await story.comment(cmt);
+        return story;
       },
     },
     followUser: {

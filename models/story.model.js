@@ -15,15 +15,36 @@ const storySchema = new Schema({
     type: Date,
     default: Date.now(),
   },
-  claps: {
-    type: Number,
-    default: 0,
-  },
+  reactions: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
+  comments: [
+    {
+      comment: {
+        type: String,
+      },
+      author: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    },
+  ],
 });
 
-storySchema.methods.clap = function () {
-  this.claps++;
-  return this.save();
+storySchema.methods.react = function (id) {
+  if (this.reactions.indexOf(id) === -1) {
+    this.reactions.push(id);
+  } else {
+    this.reactions = this.reactions.filter((u) => u != id);
+  }
+  this.save();
 };
 
+storySchema.methods.comment = function (cmt) {
+  this.comments.push(cmt);
+  this.save();
+};
 module.exports = model("Story", storySchema);
