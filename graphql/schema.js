@@ -187,6 +187,38 @@ const mutationType = new GraphQLObjectType({
         return { user: null };
       },
     },
+    deleteStory: {
+      type: storyType,
+      args: { id: { type: GraphQLID } },
+      resolve: async (_, { id }, context) => {
+        const user_id = verifyToken(context);
+        const story = await Story.findById(id);
+        if (story.authorID == user_id) {
+          await Story.findByIdAndDelete(id);
+          return { id };
+        } else {
+          throw new Error();
+        }
+      },
+    },
+    updateStory: {
+      type: storyType,
+      args: {
+        id: { type: GraphQLID },
+        title: { type: GraphQLString },
+        content: { type: GraphQLString },
+      },
+      resolve: async (_, { id, title, content }, context) => {
+        const user_id = verifyToken(context);
+        const story = await Story.findById(id);
+        if (story.authorID == user_id) {
+          await Story.findByIdAndUpdate(id, { title, content });
+          return story;
+        } else {
+          throw new Error();
+        }
+      },
+    },
     react: {
       type: storyType,
       args: { id: { type: GraphQLID } },
