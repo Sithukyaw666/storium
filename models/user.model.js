@@ -43,7 +43,7 @@ userSchema.methods.addFollowings = function (id) {
   if (this.followings.indexOf(id) === -1) {
     this.followings.push(id);
   } else {
-    this.followings = this.followings.filter((f) => f != !id);
+    this.followings = this.followings.filter((f) => f != id);
   }
   return this.save();
 };

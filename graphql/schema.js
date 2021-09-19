@@ -5,8 +5,6 @@ const {
   GraphQLID,
   GraphQLSchema,
   GraphQLList,
-  GraphQLInt,
-  graphqlSync,
 } = require("graphql");
 
 const bcrypt = require("bcrypt");
@@ -37,7 +35,8 @@ const userType = new GraphQLObjectType({
 const authType = new GraphQLObjectType({
   name: "authType",
   fields: () => ({
-    user: { type: GraphQLID },
+    id: { type: GraphQLID },
+    username: { type: GraphQLString },
   }),
 });
 const validationType = new GraphQLObjectType({
@@ -93,8 +92,9 @@ const queryType = new GraphQLObjectType({
         const user = verifyToken(context);
         if (user) {
           const user_ = await User.findById(user);
-          return { user: user_._id };
-        } else return { user: null };
+
+          return { id: user_._id, username: user_.username };
+        } else return { id: null };
       },
     },
     getAllStory: {
@@ -184,9 +184,10 @@ const mutationType = new GraphQLObjectType({
       type: authType,
       resolve: async (a, b, context) => {
         context.res.clearCookie("bearer");
-        return { user: null };
+        return { id: null };
       },
     },
+
     deleteStory: {
       type: storyType,
       args: { id: { type: GraphQLID } },
